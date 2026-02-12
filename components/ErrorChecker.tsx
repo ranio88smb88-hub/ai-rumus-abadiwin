@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { gemini } from '../services/geminiService';
-import { mockSupabase } from '../services/mockSupabase';
+import { supabaseService } from '../services/supabaseService';
 import { UserProfile } from '../types';
 
 interface Props {
@@ -21,11 +21,10 @@ const ErrorChecker: React.FC<Props> = ({ onActionComplete, user }) => {
     try {
       const output = await gemini.checkErrors(formula, dataSample);
       setResult(output);
-      await mockSupabase.addHistory({
+      await supabaseService.addHistory({
         user_id: user.id,
-        prompt: `Cek formula: ${formula} dengan konteks: ${dataSample}`,
+        prompt: `Cek formula: ${formula}`,
         response: output,
-        // Fixed: Use 'error' instead of 'checker' to match AIRequestType
         type: 'error'
       });
       onActionComplete();
@@ -38,44 +37,40 @@ const ErrorChecker: React.FC<Props> = ({ onActionComplete, user }) => {
 
   return (
     <div className="space-y-6">
-      <div className="glass rounded-2xl p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-slate-300 mb-2">Tempel Formula Anda</label>
+      <div className="glass rounded-2xl p-6 flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Tempel Formula</label>
           <input
             type="text"
             value={formula}
             onChange={(e) => setFormula(e.target.value)}
-            placeholder="=SUMIFS(B2:B10, A2:A10, '>100')..."
-            className="w-full bg-slate-950/50 border border-slate-800 rounded-xl p-3 text-slate-100 font-mono text-sm placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+            placeholder="=VLOOKUP(A2, B2:C10, 5, 0)"
+            className="w-full bg-slate-950/50 border border-slate-800 rounded-xl p-3 text-indigo-300 font-mono text-sm outline-none focus:ring-2 focus:ring-rose-500 transition-all"
           />
         </div>
-        <div className="col-span-2">
-          <label className="block text-sm font-medium text-slate-300 mb-2">Sampel Data / Konteks Kesalahan (Opsional)</label>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Konteks (Opsional)</label>
           <textarea
             value={dataSample}
             onChange={(e) => setDataSample(e.target.value)}
-            placeholder="A2: Tanggal, B2: Harga. Saya mendapatkan error #VALUE!..."
-            className="w-full bg-slate-950/50 border border-slate-800 rounded-xl p-4 text-slate-100 placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none h-24 transition-all"
+            placeholder="Misal: Saya ingin mengambil data dari kolom ke-2 tapi muncul #REF!"
+            className="w-full bg-slate-950/50 border border-slate-800 rounded-xl p-4 text-slate-100 h-24 outline-none focus:ring-2 focus:ring-rose-500 transition-all"
           />
         </div>
         <button
           onClick={handleCheck}
           disabled={loading || !formula}
-          className="col-span-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+          className="bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
         >
-          {loading ? (
-            <i className="fa-solid fa-circle-notch fa-spin"></i>
-          ) : (
-            <i className="fa-solid fa-magnifying-glass-chart"></i>
-          )}
-          {loading ? 'Menganalisis...' : 'Analisis Kesalahan'}
+          {loading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-bug-slash"></i>}
+          {loading ? 'Menganalisis...' : 'Audit Formula'}
         </button>
       </div>
 
       {result && (
-        <div className="glass rounded-2xl p-6 border-indigo-500/30 animate-in zoom-in-95">
-          <h3 className="text-lg font-semibold text-white mb-4">Laporan Audit Formula</h3>
-          <div className="prose prose-invert max-w-none text-slate-300 whitespace-pre-wrap bg-slate-950 p-6 rounded-xl border border-slate-800 font-mono text-sm">
+        <div className="glass rounded-2xl p-6 border-rose-500/30 animate-in zoom-in-95">
+          <h3 className="text-lg font-bold text-white mb-4">Temuan Audit</h3>
+          <div className="bg-slate-950 p-6 rounded-xl border border-slate-800 font-mono text-sm text-slate-300 whitespace-pre-wrap">
             {result}
           </div>
         </div>

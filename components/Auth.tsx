@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { mockSupabase } from '../services/mockSupabase';
+import { supabaseService } from '../services/supabaseService';
 
 interface Props {
   onLogin: (user: UserProfile) => void;
@@ -14,16 +15,16 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!email || !password) {
-      alert('Silakan masukkan email dan password.');
+    if (!email) {
+      alert('Silakan masukkan email.');
       return;
     }
     setLoading(true);
     try {
-      const user = await mockSupabase.login(email);
+      const user = await supabaseService.login(email);
       onLogin(user);
-    } catch (err) {
-      alert('Login gagal. Silakan coba lagi.');
+    } catch (err: any) {
+      alert(`Login gagal: ${err.message || 'Cek koneksi internet Anda.'}`);
       setLoading(false);
     }
   };
@@ -52,7 +53,7 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
           border-radius: 12px;
           letter-spacing: 2px;
           text-transform: uppercase;
-          background-color: #00a7ee;
+          background-color: var(--primary);
           transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
           width: 240px;
           height: 60px;
@@ -85,8 +86,7 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
 
         #mainButton:not(.active):hover {
           transform: translateY(-2px) scale(1.02);
-          background-color: #00b8ff;
-          box-shadow: 0 25px 50px rgba(0, 167, 238, 0.3);
+          filter: brightness(1.1);
         }
 
         .modal {
@@ -169,7 +169,7 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
         }
 
         .input-group input:focus {
-          border-bottom-color: #00a7ee;
+          border-bottom-color: var(--primary);
         }
 
         .input-group label {
@@ -186,7 +186,7 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
           font-size: 12px;
           transform: translateY(-38px);
           font-weight: 700;
-          color: #00a7ee;
+          color: var(--primary);
           text-transform: uppercase;
           letter-spacing: 1px;
         }
@@ -197,7 +197,7 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
           color: white;
           margin-top: 32px;
           text-align: center;
-          background: linear-gradient(135deg, #00a7ee 0%, #4f46e5 100%);
+          background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
           font-weight: 700;
           cursor: pointer;
           transition: all 0.3s;
@@ -214,11 +214,11 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
 
       <div className="mb-20 text-center animate-fade-in relative z-0">
         <div className="flex items-center justify-center gap-4 mb-4">
-          <div className="w-12 h-12 bg-[#00a7ee]/10 rounded-xl flex items-center justify-center border border-[#00a7ee]/20">
-            <i className="fa-solid fa-bolt-lightning text-[#00a7ee] text-2xl"></i>
+          <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20">
+            <i className="fa-solid fa-bolt-lightning text-indigo-500 text-2xl"></i>
           </div>
-          <h1 className="text-5xl font-bold text-white tracking-tighter">
-            OPERATOR <span className="text-[#00a7ee]">AI</span>
+          <h1 className="text-5xl font-bold text-white tracking-tighter uppercase">
+            OPERATOR <span className="text-indigo-500">AI</span>
           </h1>
         </div>
         <p className="text-slate-500 font-medium text-lg tracking-wide max-w-md mx-auto">
@@ -244,35 +244,37 @@ const Auth: React.FC<Props> = ({ onLogin }) => {
           <div className="auth-container">
             <div className="text-center mb-10">
               <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Login Operator</h2>
-              <p className="text-slate-500 text-sm">Gunakan kredensial Anda untuk melanjutkan.</p>
+              <p className="text-slate-500 text-sm">Gunakan email Anda untuk memulai sesi aman.</p>
             </div>
             
-            <div className="input-group">
-              <input 
-                type="email" 
-                id="email" 
-                className={email ? 'has-value' : ''}
-                value={email}
-                autoComplete="off"
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <label htmlFor="email">Email Address</label>
-            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="input-group">
+                <input 
+                  type="email" 
+                  id="email" 
+                  className={email ? 'has-value' : ''}
+                  value={email}
+                  autoComplete="off"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <label htmlFor="email">Email Address</label>
+              </div>
 
-            <div className="input-group">
-              <input 
-                type="password" 
-                id="password" 
-                className={password ? 'has-value' : ''}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <label htmlFor="password">Password</label>
-            </div>
+              <div className="input-group">
+                <input 
+                  type="password" 
+                  id="password" 
+                  className={password ? 'has-value' : ''}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <label htmlFor="password">Password</label>
+              </div>
 
-            <div className="form-button" onClick={() => handleSubmit()}>
-              {loading ? 'AUTENTIKASI...' : 'MASUK SEKARANG'}
-            </div>
+              <button type="submit" className="form-button w-full">
+                {loading ? 'AUTENTIKASI...' : 'MASUK SEKARANG'}
+              </button>
+            </form>
             
             <p className="mt-8 text-center text-slate-600 text-xs font-bold uppercase tracking-widest">
               Operator AI Pro &copy; 2024

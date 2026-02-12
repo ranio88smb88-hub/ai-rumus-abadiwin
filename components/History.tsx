@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { AIHistoryItem, UserProfile } from '../types';
-import { mockSupabase } from '../services/mockSupabase';
+import { supabaseService } from '../services/supabaseService';
 
 interface Props {
   history: AIHistoryItem[];
@@ -22,8 +22,12 @@ const History: React.FC<Props> = ({ history, setHistory, user, tableStyle = 'gla
   });
 
   const handleDelete = async (id: string) => {
-    await mockSupabase.deleteHistory(id);
-    setHistory(prev => prev.filter(h => h.id !== id));
+    try {
+      await supabaseService.deleteHistory(id);
+      setHistory(prev => prev.filter(h => h.id !== id));
+    } catch (err) {
+      alert("Gagal menghapus riwayat.");
+    }
   };
 
   const getTypeLabel = (type: string) => {

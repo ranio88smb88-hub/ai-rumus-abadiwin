@@ -9,7 +9,7 @@ import GoogleSheetsAnalyzer from './GoogleSheetsAnalyzer';
 import History from './History';
 import AdminPanel from './AdminPanel';
 import Settings from './Settings';
-import { mockSupabase } from '../services/mockSupabase';
+import { supabaseService } from '../services/supabaseService';
 
 interface DashboardProps {
   user: UserProfile;
@@ -23,8 +23,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, appearance, updat
   const [history, setHistory] = useState<AIHistoryItem[]>([]);
 
   const fetchHistory = async () => {
-    const data = await mockSupabase.getHistory();
-    setHistory(data);
+    try {
+      const data = await supabaseService.getHistory();
+      setHistory(data);
+    } catch (err) {
+      console.error("Gagal memuat riwayat:", err);
+    }
   };
 
   useEffect(() => {
@@ -73,7 +77,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, appearance, updat
         themeColor={appearance.themeColor}
       />
       <main className="flex-1 ml-72 overflow-y-auto">
-        {/* Banner Section with Dynamic Style */}
         <div className={`${bannerClass} px-12 py-16 relative overflow-hidden transition-all duration-700`}>
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full -ml-10 -mb-10 blur-2xl"></div>
@@ -105,7 +108,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, appearance, updat
           </div>
         </div>
 
-        {/* Content Area */}
         <div className="px-12 py-12 max-w-7xl mx-auto">
           {renderContent()}
         </div>

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { gemini } from '../services/geminiService';
-import { mockSupabase } from '../services/mockSupabase';
+import { supabaseService } from '../services/supabaseService';
 import { UserProfile } from '../types';
 
 interface Props {
@@ -20,11 +20,10 @@ const IdeaGenerator: React.FC<Props> = ({ onActionComplete, user }) => {
     try {
       const output = await gemini.generateIdeas(objective);
       setResult(output);
-      await mockSupabase.addHistory({
+      await supabaseService.addHistory({
         user_id: user.id,
         prompt: `Buat ide arsitektur untuk: ${objective}`,
         response: output,
-        // Fixed: Use 'idea' instead of 'ideas' to match AIRequestType
         type: 'idea'
       });
       onActionComplete();

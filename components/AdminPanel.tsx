@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserProfile } from '../types';
-import { mockSupabase } from '../services/mockSupabase';
+import { supabaseService } from '../services/supabaseService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-// Fix: Added tableStyle to Props to match the properties passed from Dashboard.tsx
 interface Props {
   onActionComplete: () => void;
   tableStyle?: 'glass' | 'solid' | 'minimal';
@@ -17,13 +16,18 @@ const AdminPanel: React.FC<Props> = ({ onActionComplete, tableStyle = 'glass' })
 
   const fetchAdminData = async () => {
     setLoading(true);
-    const [u, s] = await Promise.all([
-      mockSupabase.getAllUsers(),
-      mockSupabase.getStats()
-    ]);
-    setUsers(u);
-    setStats(s);
-    setLoading(false);
+    try {
+      const [u, s] = await Promise.all([
+        supabaseService.getAllUsers(),
+        supabaseService.getStats()
+      ]);
+      setUsers(u);
+      setStats(s);
+    } catch (err) {
+      console.error("Gagal memuat data admin:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -31,20 +35,20 @@ const AdminPanel: React.FC<Props> = ({ onActionComplete, tableStyle = 'glass' })
   }, []);
 
   const handlePromote = async (id: string) => {
-    await mockSupabase.promoteUser(id);
+    await supabaseService.promoteUser(id);
     fetchAdminData();
   };
 
   const handleDeleteUser = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
-      await mockSupabase.deleteUser(id);
+      await supabaseService.deleteUser(id);
       fetchAdminData();
     }
   };
 
   const handleClearHistory = async () => {
     if (confirm('Hapus SEMUA riwayat AI secara global? Tindakan ini tidak dapat dibatalkan.')) {
-      await mockSupabase.clearGlobalHistory();
+      await supabaseService.clearGlobalHistory();
       fetchAdminData();
       onActionComplete();
     }
@@ -60,6 +64,7 @@ const AdminPanel: React.FC<Props> = ({ onActionComplete, tableStyle = 'glass' })
     { name: 'Generator', value: stats?.types.generator || 0, color: '#6366f1' },
     { name: 'Pemeriksa', value: stats?.types.checker || 0, color: '#f43f5e' },
     { name: 'Ide', value: stats?.types.ideas || 0, color: '#f59e0b' },
+    { name: 'Analisis', value: stats?.types.analysis || 0, color: '#10b981' },
   ];
 
   return (
@@ -141,7 +146,7 @@ const AdminPanel: React.FC<Props> = ({ onActionComplete, tableStyle = 'glass' })
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-indigo-400">
-                        {u.email[0].toUpperCase()}
+                        {u.email ? u.email[0].toUpperCase() : '?'}
                       </div>
                       <span className="text-sm font-medium text-slate-200">{u.email}</span>
                     </div>

@@ -21,7 +21,7 @@ const FormulaGenerator: React.FC<Props> = ({ onActionComplete, user }) => {
       const output = await gemini.generateFormula(prompt);
       setResult(output);
       
-      // Menggunakan supabaseService asli, bukan mock
+      // Simpan riwayat menggunakan database asli
       await supabaseService.addHistory({
         user_id: user.id,
         prompt: `Buat formula: ${prompt}`,
@@ -30,7 +30,7 @@ const FormulaGenerator: React.FC<Props> = ({ onActionComplete, user }) => {
       });
       onActionComplete();
     } catch (err) {
-      console.error(err);
+      console.error("Generator Error:", err);
     } finally {
       setLoading(false);
     }
@@ -39,40 +39,36 @@ const FormulaGenerator: React.FC<Props> = ({ onActionComplete, user }) => {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="glass rounded-2xl p-6">
-        <label className="block text-sm font-medium text-slate-300 mb-2">Jelaskan formula yang Anda butuhkan</label>
+        <label className="block text-sm font-medium text-slate-300 mb-2">Instruksi Formula</label>
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Contoh: Buat formula untuk menghitung rata-rata tertimbang penjualan..."
+          placeholder="Contoh: Hitung total penjualan jika kategori adalah 'Elektronik' dan tanggal di bulan Januari..."
           className="w-full bg-slate-950/50 border border-slate-800 rounded-xl p-4 text-slate-100 placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none h-32 transition-all"
         />
         <button
           onClick={handleGenerate}
           disabled={loading || !prompt}
-          className="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
+          className="mt-4 w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2"
         >
-          {loading ? (
-            <i className="fa-solid fa-circle-notch fa-spin"></i>
-          ) : (
-            <i className="fa-solid fa-wand-magic-sparkles"></i>
-          )}
-          {loading ? 'Sedang Memproses...' : 'Buat Formula'}
+          {loading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-wand-magic-sparkles"></i>}
+          {loading ? 'Memproses...' : 'Buat Formula'}
         </button>
       </div>
 
       {result && (
         <div className="glass rounded-2xl p-6 border-indigo-500/30 animate-in zoom-in-95 duration-300">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-white">Hasil Formula AI</h3>
+            <h3 className="text-lg font-semibold text-white italic">Hasil Rekomendasi AI</h3>
             <button 
               onClick={() => navigator.clipboard.writeText(result)}
-              className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+              className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-bold"
             >
-              <i className="fa-solid fa-copy"></i> Salin Hasil
+              <i className="fa-solid fa-copy"></i> SALIN
             </button>
           </div>
           <div className="bg-slate-950 rounded-xl p-5 border border-slate-800">
-            <pre className="whitespace-pre-wrap font-mono text-sm text-indigo-300 overflow-x-auto leading-relaxed">
+            <pre className="whitespace-pre-wrap font-mono text-sm text-indigo-300 overflow-x-auto">
               {result}
             </pre>
           </div>
