@@ -1,22 +1,28 @@
 
-# 🚀 Panduan Deployment Produksi - Operator AI Formula Pro
+# 🚀 Panduan Deployment - ai-rumus-abadiwin
 
-Gunakan panduan ini untuk memastikan fitur "Real-Time Audit" berjalan lancar dengan integrasi Google Sheets API.
+Gunakan panduan ini untuk mengaktifkan database dan integrasi Google Sheets.
 
 ## 🛠️ Langkah 1: Setup Database (Supabase)
-Jalankan script SQL berikut di SQL Editor Supabase Anda:
+1. Buka project Anda di Supabase.
+2. **Cari Project URL**: Klik menu **Project Settings > API**.
+3. Copy **Project URL** (Contoh: `https://ebumpfvebtpxnzbhngef.supabase.co`).
+4. Copy **anon / public key**.
+5. Buka **SQL Editor** dan jalankan script ini untuk membuat tabel:
 
 ```sql
+-- Tabel Profil Pengguna
 CREATE TABLE IF NOT EXISTS profiles (
-  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   email TEXT UNIQUE,
   role TEXT DEFAULT 'operator',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Tabel Riwayat Audit AI
 CREATE TABLE IF NOT EXISTS ai_history (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users ON DELETE CASCADE,
+  user_id UUID,
   prompt TEXT,
   response TEXT,
   type TEXT,
@@ -25,32 +31,18 @@ CREATE TABLE IF NOT EXISTS ai_history (
 ```
 
 ## 🔐 Langkah 2: Environment Variables (Vercel)
-Wajib diisi di **Settings > Environment Variables** di dasbor Vercel:
+Wajib diisi di **Settings > Environment Variables**:
 
-| Variable | Sumber | Deskripsi |
-|---|---|---|
-| `API_KEY` | [Google AI Studio](https://aistudio.google.com/) | API Key untuk Gemini AI |
-| `GOOGLE_CLIENT_ID` | [Google Cloud Console](https://console.cloud.google.com/) | OAuth 2.0 Client ID |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Settings | URL API Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Settings | Anon Key Supabase |
+| Key | Value |
+|---|---|
+| `API_KEY` | (Dari Google AI Studio) |
+| `GOOGLE_CLIENT_ID` | (Dari Google Cloud Console) |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://ebumpfvebtpxnzbhngef.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | (Kunci 'anon' dari Supabase API Settings) |
 
-## 🌐 Langkah 3: Konfigurasi OAuth Google
-1. Buka [Google Cloud Console](https://console.cloud.google.com/).
-2. Pilih proyek Anda, buka **APIs & Services > Credentials**.
-3. Edit **OAuth 2.0 Client ID** Anda.
-4. **Authorized JavaScript Origins**:
-   - Tambahkan `http://localhost:3000`
-   - Tambahkan `https://nama-aplikasi-anda.vercel.app` (Dapatkan dari Vercel Dashboard)
-5. **Authorized Redirect URIs**:
-   - Tambahkan `http://localhost:3000/api/auth/callback/google`
-   - Tambahkan `https://nama-aplikasi-anda.vercel.app/api/auth/callback/google`
-6. Pastikan Anda sudah mengaktifkan **Google Sheets API** di menu "Library".
-
-## 🚀 Langkah 4: Deployment
-Push kode ke GitHub, hubungkan ke Vercel. Jangan lupa melakukan **Redeploy** setiap kali Anda mengubah Environment Variables di dasbor Vercel.
-
-## 🛡️ Jaminan Keamanan
-Aplikasi ini menggunakan scope `auth/spreadsheets.readonly`. 
-- **Read-Only**: Aplikasi hanya membaca struktur metadata.
-- **No Data Storage**: Isi sel spreadsheet tidak pernah disimpan di database kami.
-- **Encrypted**: Koneksi menggunakan terowongan aman HTTPS Google.
+## 🌐 Langkah 3: OAuth Google Cloud
+Pada Client ID Anda, masukkan:
+- **Authorized JavaScript Origins**: 
+  `https://ai-rumus-abadiwin.vercel.app`
+- **Authorized Redirect URIs**: 
+  `https://ai-rumus-abadiwin.vercel.app/api/auth/callback/google`

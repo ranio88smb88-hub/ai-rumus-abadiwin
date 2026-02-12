@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, AppearanceSettings } from './types';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
-import { mockSupabase } from './services/mockSupabase';
+import { supabaseService, isSupabaseConfigured } from './services/supabaseService';
 
 const defaultSettings: AppearanceSettings = {
   bannerStyle: 'default',
@@ -19,28 +19,31 @@ const App: React.FC = () => {
   const [appearance, setAppearance] = useState<AppearanceSettings>(defaultSettings);
 
   useEffect(() => {
-    // Sync User
-    const savedUser = mockSupabase.getCurrentUser();
-    if (savedUser) setUser(savedUser);
+    const init = async () => {
+      // Hanya jalankan sync jika supabase sudah siap
+      if (isSupabaseConfigured) {
+        const savedUser = await supabaseService.getCurrentUser();
+        if (savedUser) setUser(savedUser);
+      }
 
-    // Sync Appearance from LocalStorage
-    const savedAppearance = localStorage.getItem('op_appearance');
-    if (savedAppearance) {
-      const parsed = JSON.parse(savedAppearance);
-      setAppearance(parsed);
-      applyAppearance(parsed);
-    } else {
-      applyAppearance(defaultSettings);
-    }
-    
-    setInitializing(false);
+      // Sync Appearance
+      const savedAppearance = localStorage.getItem('op_appearance');
+      if (savedAppearance) {
+        const parsed = JSON.parse(savedAppearance);
+        setAppearance(parsed);
+        applyAppearance(parsed);
+      } else {
+        applyAppearance(defaultSettings);
+      }
+      
+      setInitializing(false);
+    };
+    init();
   }, []);
 
   const applyAppearance = (settings: AppearanceSettings) => {
-    // Apply Font
     document.documentElement.style.setProperty('--font-main', `'${settings.fontFamily}', sans-serif`);
     
-    // Apply Theme Color RGB (for radial gradients)
     const colorMap: Record<string, string> = {
       blue: '0, 167, 238',
       purple: '139, 92, 246',
@@ -51,7 +54,6 @@ const App: React.FC = () => {
     document.documentElement.style.setProperty('--primary-rgb', colorMap[settings.themeColor]);
     document.documentElement.style.setProperty('--primary', `rgb(${colorMap[settings.themeColor]})`);
 
-    // Apply Background Layer Class
     const bgLayer = document.getElementById('bg-layer');
     if (bgLayer) {
       bgLayer.className = `bg-${settings.backgroundType}`;
@@ -69,20 +71,44 @@ const App: React.FC = () => {
     setUser(loggedUser);
   };
 
-  const handleLogout = () => {
-    mockSupabase.logout();
+  const handleLogout = async () => {
+    await supabaseService.logout();
     setUser(null);
   };
+
+  // Tampilkan UI Eror jika Variabel Lingkungan Belum Diisi
+  if (!isSupabaseConfigured && !initializing) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-center">
+        <div className="glass max-w-md p-10 rounded-3xl border-rose-500/20 shadow-2xl">
+          <div className="w-20 h-20 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-rose-500/20">
+            <i className="fa-solid fa-triangle-exclamation text-rose-500 text-4xl"></i>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-4">Konfigurasi Database Diperlukan</h2>
+          <p className="text-slate-400 mb-8 leading-relaxed">
+            Aplikasi tidak dapat terhubung ke database. Silakan masukkan <code className="text-indigo-400 bg-indigo-400/10 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> dan <code className="text-indigo-400 bg-indigo-400/10 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> di pengaturan Vercel Anda.
+          </p>
+          <a 
+            href="https://vercel.com" 
+            target="_blank" 
+            className="block w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl transition-all"
+          >
+            Buka Dashboard Vercel
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (initializing) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse">
-            <i className="fa-solid fa-calculator text-indigo-500 text-3xl"></i>
+            <i className="fa-solid fa-bolt-lightning text-indigo-500 text-3xl"></i>
           </div>
           <div className="flex items-center gap-2 text-slate-500 font-medium">
-             <i className="fa-solid fa-circle-notch fa-spin"></i> Menyiapkan Sistem...
+             <i className="fa-solid fa-circle-notch fa-spin"></i> Menghubungkan ke Database...
           </div>
         </div>
       </div>
