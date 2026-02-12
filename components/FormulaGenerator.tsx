@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { gemini } from '../services/geminiService';
-import { mockSupabase } from '../services/mockSupabase';
+import { supabaseService } from '../services/supabaseService';
 import { UserProfile } from '../types';
 
 interface Props {
@@ -20,7 +20,8 @@ const FormulaGenerator: React.FC<Props> = ({ onActionComplete, user }) => {
     try {
       const output = await gemini.generateFormula(prompt);
       setResult(output);
-      await mockSupabase.addHistory({
+      // Simpan ke database asli
+      await supabaseService.addHistory({
         user_id: user.id,
         prompt: `Buat formula: ${prompt}`,
         response: output,
@@ -41,7 +42,7 @@ const FormulaGenerator: React.FC<Props> = ({ onActionComplete, user }) => {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Contoh: Buat formula untuk menghitung rata-rata tertimbang penjualan di kolom B jika tanggal di kolom A berada di tahun 2023..."
+          placeholder="Contoh: Buat formula untuk menghitung rata-rata tertimbang penjualan..."
           className="w-full bg-slate-950/50 border border-slate-800 rounded-xl p-4 text-slate-100 placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500 outline-none h-32 transition-all"
         />
         <button
