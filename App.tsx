@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, AppearanceSettings } from './types';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
-import { supabaseService } from './services/supabaseService';
+import { mockSupabase } from './services/mockSupabase';
 
 const defaultSettings: AppearanceSettings = {
   bannerStyle: 'default',
@@ -19,29 +19,28 @@ const App: React.FC = () => {
   const [appearance, setAppearance] = useState<AppearanceSettings>(defaultSettings);
 
   useEffect(() => {
-    const init = async () => {
-      // Sync User
-      const savedUser = await supabaseService.getCurrentUser();
-      if (savedUser) setUser(savedUser);
+    // Sync User
+    const savedUser = mockSupabase.getCurrentUser();
+    if (savedUser) setUser(savedUser);
 
-      // Sync Appearance from LocalStorage
-      const savedAppearance = localStorage.getItem('op_appearance');
-      if (savedAppearance) {
-        const parsed = JSON.parse(savedAppearance);
-        setAppearance(parsed);
-        applyAppearance(parsed);
-      } else {
-        applyAppearance(defaultSettings);
-      }
-      
-      setInitializing(false);
-    };
-    init();
+    // Sync Appearance from LocalStorage
+    const savedAppearance = localStorage.getItem('op_appearance');
+    if (savedAppearance) {
+      const parsed = JSON.parse(savedAppearance);
+      setAppearance(parsed);
+      applyAppearance(parsed);
+    } else {
+      applyAppearance(defaultSettings);
+    }
+    
+    setInitializing(false);
   }, []);
 
   const applyAppearance = (settings: AppearanceSettings) => {
+    // Apply Font
     document.documentElement.style.setProperty('--font-main', `'${settings.fontFamily}', sans-serif`);
     
+    // Apply Theme Color RGB (for radial gradients)
     const colorMap: Record<string, string> = {
       blue: '0, 167, 238',
       purple: '139, 92, 246',
@@ -52,6 +51,7 @@ const App: React.FC = () => {
     document.documentElement.style.setProperty('--primary-rgb', colorMap[settings.themeColor]);
     document.documentElement.style.setProperty('--primary', `rgb(${colorMap[settings.themeColor]})`);
 
+    // Apply Background Layer Class
     const bgLayer = document.getElementById('bg-layer');
     if (bgLayer) {
       bgLayer.className = `bg-${settings.backgroundType}`;
@@ -69,8 +69,8 @@ const App: React.FC = () => {
     setUser(loggedUser);
   };
 
-  const handleLogout = async () => {
-    await supabaseService.logout();
+  const handleLogout = () => {
+    mockSupabase.logout();
     setUser(null);
   };
 
@@ -79,10 +79,10 @@ const App: React.FC = () => {
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-indigo-600/20 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse">
-            <i className="fa-solid fa-bolt-lightning text-indigo-500 text-3xl"></i>
+            <i className="fa-solid fa-calculator text-indigo-500 text-3xl"></i>
           </div>
           <div className="flex items-center gap-2 text-slate-500 font-medium">
-             <i className="fa-solid fa-circle-notch fa-spin"></i> Menghubungkan ke Database...
+             <i className="fa-solid fa-circle-notch fa-spin"></i> Menyiapkan Sistem...
           </div>
         </div>
       </div>
