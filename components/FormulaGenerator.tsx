@@ -20,7 +20,8 @@ const FormulaGenerator: React.FC<Props> = ({ onActionComplete, user }) => {
     try {
       const output = await gemini.generateFormula(prompt);
       setResult(output);
-      // Simpan ke database asli
+      
+      // Menggunakan supabaseService asli, bukan mock
       await supabaseService.addHistory({
         user_id: user.id,
         prompt: `Buat formula: ${prompt}`,
