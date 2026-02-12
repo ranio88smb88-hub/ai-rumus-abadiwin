@@ -1,24 +1,23 @@
+
 import { GoogleGenAI } from "@google/genai";
 
-export class GeminiService {
+// Pastikan API_KEY tersedia. Jika di Vercel, pastikan sudah diisi di Environment Variables.
+const API_KEY = process.env.API_KEY || "";
+
+class GeminiService {
   private ai: GoogleGenAI | null = null;
-  // Menggunakan Gemini 3 sesuai standar instruksi terbaru
   private fastModel = 'gemini-3-flash-preview'; 
   private proModel = 'gemini-3-pro-preview';
 
   constructor() {
-    // API_KEY diperoleh eksklusif dari environment variable process.env.API_KEY
-    const apiKey = process.env.API_KEY;
-    if (apiKey) {
-      this.ai = new GoogleGenAI({ apiKey });
-    } else {
-      console.warn("WARNING: API_KEY tidak terdeteksi. Pastikan variabel lingkungan sudah diatur di Vercel.");
+    if (API_KEY) {
+      this.ai = new GoogleGenAI({ apiKey: API_KEY });
     }
   }
 
   private async callModel(model: string, prompt: string, temperature: number = 0.5): Promise<string> {
     if (!this.ai) {
-      return "Sistem AI belum terkonfigurasi. Silakan periksa API_KEY di panel kontrol Vercel.";
+      return "Sistem AI belum terkonfigurasi. Periksa API_KEY di Dashboard Vercel.";
     }
 
     try {
@@ -32,67 +31,33 @@ export class GeminiService {
         }
       });
       
-      const text = response.text;
-      if (!text) throw new Error("Model tidak mengembalikan teks.");
-      
-      return text;
+      return response.text || "Model tidak mengembalikan teks.";
     } catch (error: any) {
       console.error("Gemini API Error:", error);
-      
-      if (error.message?.includes("429")) {
-        return "Eror: Kuota API terlampaui (Rate Limit). Silakan coba lagi beberapa saat lagi.";
-      }
-      if (error.message?.includes("403")) {
-        return "Eror: API Key tidak valid atau region Anda tidak didukung oleh Google Gemini.";
-      }
-      if (error.message?.includes("500")) {
-        return "Eror: Server Google sedang mengalami gangguan. Silakan coba lagi nanti.";
-      }
-      
-      return `Gangguan Koneksi AI: ${error.message || "Gagal mendapatkan respon dari server."}`;
+      return `Gangguan Koneksi AI: ${error.message || "Gagal mendapatkan respon."}`;
     }
   }
 
   async generateFormula(context: string): Promise<string> {
-    const prompt = `Anda adalah pakar formula Excel dan Google Sheets paling senior.
-      Buatlah formula yang optimal untuk kasus berikut: ${context}
-      
-      Berikan respon dalam format:
-      - Formula: (Tulis formula saja)
-      - Logika: (Jelaskan cara kerjanya)
-      - Catatan: (Tips performa)`;
-    
+    const prompt = `Anda adalah pakar formula Excel dan Google Sheets. Buat formula optimal untuk: ${context}. Berikan Formula, Logika, dan Catatan.`;
     return this.callModel(this.fastModel, prompt, 0.2);
   }
 
   async checkErrors(formula: string, context: string): Promise<string> {
-    const prompt = `Audit formula spreadsheet berikut untuk menemukan kesalahan sintaks, referensi, atau logika.
-      Formula: ${formula}
-      Konteks Data: ${context}
-      
-      Format Output:
-      1. Status: [Valid/Eror]
-      2. Temuan: [Detail masalah]
-      3. Perbaikan: [Formula yang sudah benar]`;
-    
+    const prompt = `Audit formula berikut: ${formula}. Konteks: ${context}. Berikan Status, Temuan, dan Perbaikan.`;
     return this.callModel(this.proModel, prompt, 0.1);
   }
 
   async generateIdeas(objective: string): Promise<string> {
-    const prompt = `Berikan desain arsitektur data spreadsheet profesional untuk tujuan: ${objective}.
-      Berikan saran mengenai Struktur Tabel, Hubungan Antar Sheet, dan Otomatisasi Script yang diperlukan.`;
-    
+    const prompt = `Berikan desain arsitektur data spreadsheet untuk: ${objective}.`;
     return this.callModel(this.proModel, prompt, 0.7);
   }
 
   async analyzeSheetFormulas(data: string): Promise<string> {
-    const prompt = `Lakukan analisis mendalam terhadap struktur data dan formula berikut:
-      ${data}
-      
-      Identifikasi kemacetan performa (performance bottleneck) dan berikan skor optimasi (0-100).`;
-    
+    const prompt = `Lakukan analisis metadata sheet berikut: ${data}.`;
     return this.callModel(this.proModel, prompt, 0.3);
   }
 }
 
+// Gunakan named export yang jelas dan inisialisasi langsung
 export const gemini = new GeminiService();
